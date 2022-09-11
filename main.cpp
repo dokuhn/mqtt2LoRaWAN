@@ -1,3 +1,7 @@
+#include <iostream>
+#include <fstream>
+#include <filesystem>
+#include <string>
 
 #include "MQTTDataStreamer.hpp"
 
@@ -23,7 +27,7 @@ uint8_t QOS = 1;
 
 const auto TIMEOUT = std::chrono::seconds(1);
 
-po::variables_map vm;
+// po::variables_map variable_map;
 
 //////////////////////////////////////////////////
 // CONFIGURATION (FOR APPLICATION CALLBACKS BELOW)
@@ -160,26 +164,57 @@ int main(int argc, char *argv[])
 {
     osjob_t initjob;
 
-    po::options_description desc("Allowed options");
-    desc.add_options()("help", "produce help message")("hostname,h", po::value<string>()->default_value("localhost"), "Hostname")("port,p", po::value<int>()->default_value(1883), "Port");
+    // set options allowed by the command line
+    po::options_description command_line_options("Allowed options");
+    command_line_options.add_options()  ("help", "produce help message")
+                                        ("hostname,h", po::value<string>()->default_value("localhost"), "Hostname")
+                                        ("port,p", po::value<int>()->default_value(1883), "Port")
+                                        ("config,c", po::value<std::string>()->default_value("default.conf"), "configuration file");
 
-    po::store(po::parse_command_line(argc, argv, desc), vm);
-    po::notify(vm);
+    // set options allowed in config file
+    po::options_description config_file_options;
+    config_file_options.add_options()   ("APPEUI", po::value<string>(), "APPEUI");
 
-    if (vm.count("help"))
+
+    po::variables_map variable_map;
+    po::store(po::parse_command_line(argc, argv, command_line_options), variable_map);
+    po::notify(variable_map);
+    
+    auto config_file = variable_map.at("config").as<std::string>();
+
+    std::ifstream ifs(config_file.c_str());
+    if (!ifs) {
+        std::cout << "can not open configuration file: " << config_file << "\n";
+    } else {
+        po::store(parse_config_file(ifs, config_file_options), variable_map);
+        po::notify(variable_map);
+    }
+
+    po::notify(variable_map);
+    std::cout << config_file << " was the config file\n";
+
+
+    if (variable_map.count("help"))
     {
-        std::cout << desc << std::endl;
+        std::cout << command_line_options << std::endl;
         return 0;
     }
 
-    std::cout << "Initializing and connecting for server '" << vm["hostname"].as<string>() << "'..." << std::endl;
+    if (variable_map.count("APPEUI"))
+    {
+        std::cout << "APPEUI: " << variable_map["APPEUI"].as<string>() << std::endl;
+    }
+
+
+
+    std::cout << "Initializing and connecting for server '" << variable_map["hostname"].as<string>() << "'..." << std::endl;
 
     std::vector<std::shared_ptr<TopicsToHandle>> topics_to_handle;
     topics_to_handle.push_back(std::make_shared<DataTransmitTopic>(
         "LoRa_test/transmitPacket/"));
 
-    auto mqtt_async_client = std::make_shared<mqtt::async_client>((string) "tcp://" + vm["hostname"].as<string>() +
-                                                                      (string) ":" + to_string(vm["port"].as<int>()),
+    auto mqtt_async_client = std::make_shared<mqtt::async_client>((string) "tcp://" + variable_map["hostname"].as<string>() +
+                                                                      (string) ":" + to_string(variable_map["port"].as<int>()),
                                                                   CLIENT_ID);
 
     auto callback = std::make_shared<MqttCallback>(mqtt_async_client, topics_to_handle);
