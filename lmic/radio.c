@@ -25,6 +25,8 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <stdio.h>
+
 #include "lmic.h"
 
 // ---------------------------------------- 
@@ -492,6 +494,11 @@ static void txlora () {
     // configure LoRa modem (cfg1, cfg2)
     configLoraModem();
     // configure frequency
+    
+#ifdef DEBUG_RADIO
+        fprintf(stdout, "%09d RADIO: Set Frequenzy to %09d Hz, SF %d \n", osticks2ms(hal_ticks()), LMIC.freq, getSf(LMIC.rps) );
+#endif
+    
     configChannel();
     // configure output power
     writeReg(RegPaRamp, (readReg(RegPaRamp) & 0xF0) | 0x08); // set PA ramp-up time 50 uSec
