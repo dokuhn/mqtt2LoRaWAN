@@ -3,9 +3,11 @@
 #include <filesystem>
 #include <string>
 
+#include "POHelperClasses.hpp"
 #include "MQTTDataStreamer.hpp"
 
 #include <boost/program_options.hpp>
+#include <boost/regex.hpp>
 namespace po = boost::program_options;
 
 extern "C"
@@ -144,6 +146,69 @@ public:
     }
 };
 
+
+/* Overload the 'validate' function for the user-defined class.
+   It makes sure that value is of form XXX-XXX 
+   where X are digits and converts the second group to an integer.
+   This has no practical meaning, meant only to show how
+   regex can be used to validate values.
+*/
+void validate(boost::any& v, 
+              const std::vector<std::string>& values,
+              magic_number*, int)
+{
+    static boost::regex r("\\d\\d\\d-(\\d\\d\\d)");
+
+    using namespace boost::program_options;
+
+    // Make sure no previous assignment to 'a' was made.
+    validators::check_first_occurrence(v);
+    // Extract the first string from 'values'. If there is more than
+    // one string, it's an error, and exception will be thrown.
+    const std::string& s = validators::get_single_string(values);
+
+    // Do regex match and convert the interesting part to 
+    // int.
+    boost::smatch match;
+    if (regex_match(s, match, r)) {
+        v = boost::any(magic_number(boost::lexical_cast<int>(match[1])));
+    } else {
+        throw validation_error(validation_error::invalid_option_value);
+    }        
+}
+
+void validate(boost::any& v, 
+              const std::vector<std::string>& values,
+              appeui*, int)
+{
+    static boost::regex r("^([[:xdigit:]]{2}[:.-]?){7}[[:xdigit:]]{2}$");
+
+    boost::regex re("[:.-]");
+
+    using namespace boost::program_options;
+
+    // Make sure no previous assignment to 'a' was made.
+    validators::check_first_occurrence(v);
+
+    // Extract the first string from 'values'. If there is more than
+    // one string, it's an error, and exception will be thrown.
+    const std::string& s = validators::get_single_string(values);
+
+    // Do regex match and convert the interesting part to 
+    // int.
+    boost::smatch match;
+    if (regex_match(s, match, r)) {
+        std::string unfilterd_string = match[0];
+        std::cout << "regex funktioniert .... " <<  boost::regex_replace(unfilterd_string, re, "" ) << std::endl;
+        // v = boost::any(appeui( boost::lexical_cast<eui.e32>(match[1]) ));
+    } else {
+        throw validation_error(validation_error::invalid_option_value);
+    }        
+}
+
+ 
+
+
 //////////////////////////////////////////////////
 // MAIN - INITIALIZATION AND STARTUP
 //////////////////////////////////////////////////
@@ -167,9 +232,12 @@ int main(int argc, char *argv[])
     // set options allowed by the command line
     po::options_description command_line_options("Allowed options");
     command_line_options.add_options()  ("help", "produce help message")
+                                        ("version,v", "print the version number")
                                         ("hostname,h", po::value<string>()->default_value("localhost"), "Hostname")
                                         ("port,p", po::value<int>()->default_value(1883), "Port")
-                                        ("config,c", po::value<std::string>()->default_value("default.conf"), "configuration file");
+                                        ("config,c", po::value<std::string>()->default_value("default.conf"), "configuration file")
+                                        ("magic,m", po::value<magic_number>(), "magic value (in NNN-NNN format)")
+                                        ("eui", po::value<appeui>(), "APPEU");
 
     // set options allowed in config file
     po::options_description config_file_options;
@@ -199,6 +267,24 @@ int main(int argc, char *argv[])
         std::cout << command_line_options << std::endl;
         return 0;
     }
+
+    if (variable_map.count("version")) {
+            cout << "Version 1.\n";
+            return 0;
+    }
+
+    if (variable_map.count("magic")) {
+        cout << "The magic is \"" << variable_map["magic"].as<magic_number>().n << "\"\n";
+        return 0;
+    }
+
+
+    if (variable_map.count("eui"))
+    {
+        // std::cout << "APPEUI: " << variable_map["eui"].as<appeui>().application_eui64.e32 << std::endl;
+        return 0;
+    }
+
 
     if (variable_map.count("APPEUI"))
     {
