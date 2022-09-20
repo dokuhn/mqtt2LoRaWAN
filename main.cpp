@@ -8,6 +8,7 @@
 
 #include <boost/program_options.hpp>
 #include <boost/regex.hpp>
+#include <boost/algorithm/hex.hpp>
 namespace po = boost::program_options;
 
 extern "C"
@@ -174,7 +175,7 @@ void validate(boost::any& v,
         v = boost::any(magic_number(boost::lexical_cast<int>(match[1])));
     } else {
         throw validation_error(validation_error::invalid_option_value);
-    }        
+    }
 }
 
 void validate(boost::any& v, 
@@ -198,15 +199,82 @@ void validate(boost::any& v,
     // int.
     boost::smatch match;
     if (regex_match(s, match, r)) {
-        std::string unfilterd_string = match[0];
-        std::cout << "regex funktioniert .... " <<  boost::regex_replace(unfilterd_string, re, "" ) << std::endl;
-        // v = boost::any(appeui( boost::lexical_cast<eui.e32>(match[1]) ));
+	std::string unfilterd_string = match[0];
+        std::string filterd_string = boost::regex_replace( unfilterd_string, re, "" );
+        std::cout << "regex funktioniert .... " <<  filterd_string << std::endl;
+        std::cout << "boost algorithm ... " <<  boost::algorithm::unhex(filterd_string) << std::endl;
+
+        v = boost::any( appeui( boost::algorithm::unhex(filterd_string)   ) );
     } else {
         throw validation_error(validation_error::invalid_option_value);
-    }        
+    }
 }
 
- 
+
+void validate(boost::any& v, 
+              const std::vector<std::string>& values,
+              deveui*, int)
+{
+    static boost::regex r("^([[:xdigit:]]{2}[:.-]?){7}[[:xdigit:]]{2}$");
+
+    boost::regex re("[:.-]");
+
+    using namespace boost::program_options;
+
+    // Make sure no previous assignment to 'a' was made.
+    validators::check_first_occurrence(v);
+
+    // Extract the first string from 'values'. If there is more than
+    // one string, it's an error, and exception will be thrown.
+    const std::string& s = validators::get_single_string(values);
+
+    // Do regex match and convert the interesting part to 
+    // int.
+    boost::smatch match;
+    if (regex_match(s, match, r)) {
+	std::string unfilterd_string = match[0];
+        std::string filterd_string = boost::regex_replace( unfilterd_string, re, "" );
+        std::cout << "regex funktioniert .... " <<  filterd_string << std::endl;
+        std::cout << "boost algorithm ... " <<  boost::algorithm::unhex(filterd_string) << std::endl;
+
+        v = boost::any( deveui( boost::algorithm::unhex(filterd_string)   ) );
+    } else {
+        throw validation_error(validation_error::invalid_option_value);
+    }
+}
+
+void validate(boost::any& v, 
+              const std::vector<std::string>& values,
+              devkey*, int)
+{
+    static boost::regex r("^([[:xdigit:]]{2}[:.-]?){15}[[:xdigit:]]{2}$");
+
+    boost::regex re("[:.-]");
+
+    using namespace boost::program_options;
+
+    // Make sure no previous assignment to 'a' was made.
+    validators::check_first_occurrence(v);
+
+    // Extract the first string from 'values'. If there is more than
+    // one string, it's an error, and exception will be thrown.
+    const std::string& s = validators::get_single_string(values);
+
+    // Do regex match and convert the interesting part to 
+    // int.
+    boost::smatch match;
+    if (regex_match(s, match, r)) {
+	std::string unfilterd_string = match[0];
+        std::string filterd_string = boost::regex_replace( unfilterd_string, re, "" );
+        std::cout << "regex funktioniert .... " <<  filterd_string << std::endl;
+        std::cout << "boost algorithm ... " <<  boost::algorithm::unhex(filterd_string) << std::endl;
+
+        v = boost::any( devkey( boost::algorithm::unhex(filterd_string)   ) );
+    } else {
+        throw validation_error(validation_error::invalid_option_value);
+    }
+}
+
 
 
 //////////////////////////////////////////////////
@@ -237,11 +305,15 @@ int main(int argc, char *argv[])
                                         ("port,p", po::value<int>()->default_value(1883), "Port")
                                         ("config,c", po::value<std::string>()->default_value("default.conf"), "configuration file")
                                         ("magic,m", po::value<magic_number>(), "magic value (in NNN-NNN format)")
-                                        ("eui", po::value<appeui>(), "APPEU");
+                                        ("appeui", po::value<appeui>(), "APPEUI")
+                                        ("deveui", po::value<deveui>(), "DEVEUI")
+					("devkey", po::value<devkey>(), "DEVKEY");
 
     // set options allowed in config file
     po::options_description config_file_options;
-    config_file_options.add_options()   ("APPEUI", po::value<string>(), "APPEUI");
+    config_file_options.add_options() ("APPEUI", po::value<appeui>(), "APPEUI")
+ 				      ("DEVEUI", po::value<deveui>(), "DEVEUI")
+				      ("DEVKEY", po::value<devkey>(), "DEVKEY");
 
 
     po::variables_map variable_map;
@@ -279,18 +351,24 @@ int main(int argc, char *argv[])
     }
 
 
-    if (variable_map.count("eui"))
+    if (variable_map.count("DEVEUI"))
     {
-        // std::cout << "APPEUI: " << variable_map["eui"].as<appeui>().application_eui64.e32 << std::endl;
-        return 0;
+        std::cout << "DEVEUI:  " << std::endl;
+        for( int i = 0; i < 8; i++ ){
+	   std::printf("%#02x", variable_map["DEVEUI"].as<deveui>().device_eui64.e8[i] );
+	}
+	std::cout << std::endl;
     }
 
 
     if (variable_map.count("APPEUI"))
     {
-        std::cout << "APPEUI: " << variable_map["APPEUI"].as<string>() << std::endl;
+        std::cout << "APPEUI: "  << std::endl;
+        for( int i = 0; i < 8; i++ ){
+	   std::printf("%#02x", variable_map["APPEUI"].as<appeui>().application_eui64.e8[i] );
+	}
+	std::cout << std::endl;
     }
-
 
 
     std::cout << "Initializing and connecting for server '" << variable_map["hostname"].as<string>() << "'..." << std::endl;
