@@ -37,13 +37,13 @@ const auto TIMEOUT = std::chrono::seconds(1);
 //////////////////////////////////////////////////
 
 // application router ID (LSBF)
-static const u1_t APPEUI[8] = {0x01, 0x01, 0x00, 0x00, 0x00, 0x00, 0x23, 0x45};
+static u1_t APPEUI[8];
 
 // unique device ID (LSBF)
-static const u1_t DEVEUI[8] = {0x8D, 0x53, 0x05, 0xD0, 0x7E, 0xD5, 0xB3, 0x70};
+static u1_t DEVEUI[8];
 
 // device-specific AES key (derived from device EUI)
-static const u1_t DEVKEY[16] = {0x44, 0x99, 0xB4, 0xD3, 0xDB, 0x02, 0x07, 0xE3, 0xD6, 0x1A, 0x06, 0x6E, 0xCB, 0x26, 0xFC, 0xA2};
+static u1_t DEVKEY[16];
 
 //////////////////////////////////////////////////
 // LMIC APPLICATION CALLBACKS
@@ -307,13 +307,13 @@ int main(int argc, char *argv[])
                                         ("magic,m", po::value<magic_number>(), "magic value (in NNN-NNN format)")
                                         ("appeui", po::value<appeui>(), "APPEUI")
                                         ("deveui", po::value<deveui>(), "DEVEUI")
-					("devkey", po::value<devkey>(), "DEVKEY");
+					                    ("devkey", po::value<devkey>(), "DEVKEY");
 
     // set options allowed in config file
     po::options_description config_file_options;
     config_file_options.add_options() ("APPEUI", po::value<appeui>(), "APPEUI")
- 				      ("DEVEUI", po::value<deveui>(), "DEVEUI")
-				      ("DEVKEY", po::value<devkey>(), "DEVKEY");
+ 				                      ("DEVEUI", po::value<deveui>(), "DEVEUI")
+				                      ("DEVKEY", po::value<devkey>(), "DEVKEY");
 
 
     po::variables_map variable_map;
@@ -355,9 +355,14 @@ int main(int argc, char *argv[])
     {
         std::cout << "DEVEUI:  " << std::endl;
         for( int i = 0; i < 8; i++ ){
-	   std::printf("%#02x", variable_map["DEVEUI"].as<deveui>().device_eui64.e8[i] );
-	}
-	std::cout << std::endl;
+	        std::printf("%#02x", variable_map["DEVEUI"].as<deveui>().device_eui64.e8[i] );
+	    }
+	    std::cout << std::endl;
+	    std::memcpy(DEVEUI, variable_map["DEVEUI"].as<deveui>().device_eui64.e8, 8);
+
+    }else{
+        std::cout << "No DEVEUI found in the config file. Add a 8 bytes long EUI to config file or specify an EUI as an option via the command line." << std::endl;
+        return 1;
     }
 
 
@@ -365,9 +370,26 @@ int main(int argc, char *argv[])
     {
         std::cout << "APPEUI: "  << std::endl;
         for( int i = 0; i < 8; i++ ){
-	   std::printf("%#02x", variable_map["APPEUI"].as<appeui>().application_eui64.e8[i] );
-	}
-	std::cout << std::endl;
+	        std::printf("%#02x", variable_map["APPEUI"].as<appeui>().application_eui64.e8[i] );
+	    }
+	    std::cout << std::endl;
+            std::memcpy(APPEUI, variable_map["APPEUI"].as<appeui>().application_eui64.e8, 8);
+    }else{
+        std::cout << "No APPEUI found in the config file. Add a 8 bytes long EUI to config file or specify an EUI as an option via the command line." << std::endl;
+        return 1;
+    }
+
+    if (variable_map.count("DEVKEY"))
+    {
+        std::cout << "DEVKEY: "  << std::endl;
+        for( int i = 0; i < 16; i++ ){
+	        std::printf("%#02x", variable_map["DEVKEY"].as<devkey>().device_key[i] );
+	    }
+	    std::cout << std::endl;
+            std::memcpy(DEVKEY, variable_map["DEVKEY"].as<devkey>().device_key, 16);
+    }else{
+        std::cout << "No DEVKEY found in the config file. Add a 16 bytes long key to config file or specify a key as an option via the command line." << std::endl;
+        return 1;
     }
 
 
