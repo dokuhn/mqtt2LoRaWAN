@@ -276,6 +276,19 @@ void validate(boost::any& v,
 }
 
 
+std::string mapper(std::string env_var)
+{
+   // ensure the env_var is all caps
+   std::transform(env_var.begin(), env_var.end(), env_var.begin(), ::toupper);
+
+   if (env_var == "PATH") return "path";
+   if (env_var == "EXAMPLE_VERBOSE") return "verbosity";
+   if (env_var == "HOSTNAME") return "hostname";
+   if (env_var == "HOME") return "home";
+   return "";
+}
+
+
 
 //////////////////////////////////////////////////
 // MAIN - INITIALIZATION AND STARTUP
@@ -296,6 +309,37 @@ static void initfunc(osjob_t *j)
 int main(int argc, char *argv[])
 {
     osjob_t initjob;
+
+    std::string hostname;
+
+    boost::program_options::options_description desc_env;
+    desc_env.add_options() ("path", "the execution path")
+                           ("home", "the home directory of the executing user")
+     			   ("verbosity", po::value<std::string>()->default_value("INFO"), "set verbosity: DEBUG, INFO, WARN, ERROR, FATAL")
+			   ("hostname", boost::program_options::value<std::string>(&hostname));
+
+    boost::program_options::variables_map vm_env;
+    boost::program_options::store(boost::program_options::parse_environment(desc_env, boost::function1<std::string, std::string>(mapper)), vm_env);
+    boost::program_options::notify(vm_env);
+
+    if (vm_env.count("home"))
+    {
+        std::cout << "home path: " << vm_env["home"].as<std::string>() << std::endl;
+    }
+
+    if (vm_env.count("path"))
+    {
+        std::cout << "First 75 chars of the system path: \n";
+        std::cout << vm_env["path"].as<std::string>().substr(0, 75) << std::endl;
+    }
+
+    std::cout << "Verbosity: " << vm_env["verbosity"].as<std::string>() << std::endl;
+
+    if ( vm_env.count("hostname"))
+    {
+        std::cout << "hostname: " <<  vm_env["hostname"].as<std::string>() << std::endl; // correct value of HOSTNAME environent variable
+    }
+
 
     // set options allowed by the command line
     po::options_description command_line_options("Allowed options");
