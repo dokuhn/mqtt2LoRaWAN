@@ -315,8 +315,8 @@ int main(int argc, char *argv[])
     boost::program_options::options_description desc_env;
     desc_env.add_options() ("path", "the execution path")
                            ("home", "the home directory of the executing user")
-     			   ("verbosity", po::value<std::string>()->default_value("INFO"), "set verbosity: DEBUG, INFO, WARN, ERROR, FATAL")
-			   ("hostname", boost::program_options::value<std::string>(&hostname));
+     			           ("verbosity", po::value<std::string>()->default_value("INFO"), "set verbosity: DEBUG, INFO, WARN, ERROR, FATAL")
+            			   ("hostname", boost::program_options::value<std::string>(&hostname));
 
     boost::program_options::variables_map vm_env;
     boost::program_options::store(boost::program_options::parse_environment(desc_env, boost::function1<std::string, std::string>(mapper)), vm_env);
@@ -347,7 +347,7 @@ int main(int argc, char *argv[])
                                         ("version,v", "print the version number")
                                         ("hostname,h", po::value<string>()->default_value("localhost"), "Hostname")
                                         ("port,p", po::value<int>()->default_value(1883), "Port")
-                                        ("config,c", po::value<std::string>()->default_value("default.conf"), "configuration file")
+                                        ("config,c", po::value<std::string>(), "configuration file")
                                         ("magic,m", po::value<magic_number>(), "magic value (in NNN-NNN format)")
                                         ("appeui", po::value<appeui>(), "APPEUI")
                                         ("deveui", po::value<deveui>(), "DEVEUI")
@@ -363,8 +363,24 @@ int main(int argc, char *argv[])
     po::variables_map variable_map;
     po::store(po::parse_command_line(argc, argv, command_line_options), variable_map);
     po::notify(variable_map);
-    
-    auto config_file = variable_map.at("config").as<std::string>();
+
+    std::string config_file;
+    if( variable_map.count("config") ){
+        config_file = variable_map.at("config").as<std::string>();
+    }else if( vm_env.count("home") ){
+        
+        if(std::filesystem::exists( vm_env["home"].as<std::string>() + "/.config/mqtt2LoRaWAN/default.conf" )){
+            config_file = vm_env["home"].as<std::string>() + "/.config/mqtt2LoRaWAN/default.conf";
+        }else if(std::filesystem::exists("/etc/mqtt2LoRaWAN/default.conf")){
+            config_file =  "/etc/mqtt2LoRaWAN/default.conf";
+        }
+
+    }else{
+        if(std::filesystem::exists("/etc/mqtt2LoRaWAN/default.conf")){
+            config_file =  "/etc/mqtt2LoRaWAN/default.conf";
+        }
+    }
+
 
     std::ifstream ifs(config_file.c_str());
     if (!ifs) {
