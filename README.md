@@ -23,7 +23,7 @@ In the case of the GPS-Logger, an application written in Python reads the curren
 Change to the directory */opt* and create a directory named *libraries* for the needed libraries. Change the owner of the directory to *pi* to get unrestricted access to the directory and the directroy under it.
 
 ```bash
-cd /opt && sudo mkdir libaries && chown -R pi:pi ./libraries 
+cd /opt && sudo mkdir libraries && chown -R pi:pi ./libraries 
 ```
 
 ## MQTT Libraries
@@ -112,6 +112,12 @@ git clone https://github.com/eclipse/paho.mqtt.cpp
 
 Build the mqtt C++ library statical with tests and documentation:
 
+```bash
+cd paho.mqtt.cpp
+```  
+
+<br>
+
 ```bash 
 cmake -Bbuild -H. -DPAHO_BUILD_STATIC=ON \
       -DPAHO_BUILD_DOCUMENTATION=TRUE -DPAHO_BUILD_SAMPLES=TRUE
@@ -153,13 +159,13 @@ git submodule update  --init
 This will build Boostdep from source using the default "toolset" (a Boost.Build term meaning "compiler") and if successful, place it into the dist/bin subdirectory. The command assumes that b2 (the Boost.Build executable) is somewhere in your path. If you don't have b2, execute:
 
 ```bash
-.\bootstrap
+./bootstrap
 ```
 
 Change your current directory to the Boost root directory and invoke b2 as follows:
 
 ```bash 
-.\b2 -j2 --with-timer --with-program_options 
+./b2 -j2 --with-timer --with-program_options --with-regex
 ``` 
 
 In particular, to limit the amount of time spent building, you may be interested in:
