@@ -22,7 +22,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 add_compile_options(-Wall -Wextra -pedantic -lstdc++)
 add_definitions(-DCFG_DEBUG -DCFG_eu868 -DCFG_sx1276_radio -DDEBUG_LMIC -DDEBUG_HAL -DDEBUG_RADIO)
 
-add_executable(mqtt2LoRaWAN main.cpp MQTTDataStreamer.cpp POHelperClasses.cpp ./lmic/lmic.c ./lmic/aes.c  ./lmic/radio.c ./lmic/oslmic.c ./lora_gps_hat/debug.c ./lora_gps_hat/gpio.c ./lora_gps_hat/hal.c )
+add_executable(mqtt2LoRaWAN main.cpp MQTTDataStreamer.cpp POHelperClasses.cpp POCmdlineHelperClasses.cpp ./lmic/lmic.c ./lmic/aes.c  ./lmic/radio.c ./lmic/oslmic.c ./lora_gps_hat/debug.c ./lora_gps_hat/gpio.c ./lora_gps_hat/hal.c )
 
 target_include_directories (mqtt2LoRaWAN PUBLIC 
                             "${CMAKE_CURRENT_SOURCE_DIR}"

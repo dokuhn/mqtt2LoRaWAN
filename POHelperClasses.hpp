@@ -4,6 +4,7 @@
 #include <string>
 #include <cstdint>
 
+#include <boost/program_options.hpp>
 
 typedef union {
     uint8_t     e8[8];      /* lower 64-bit address */
@@ -31,13 +32,13 @@ public:
 };
 
 
-
 class deveui {
 
 public:
     deveui(std::string deveui_hexstring);
     eui64_t device_eui64;
 };
+
 
 
 class devkey {
@@ -47,6 +48,11 @@ public:
     devkey_t device_key;
 };
 
+
+void validate(boost::any& v, const std::vector<std::string>& values, magic_number*, int);
+void validate(boost::any& v, const std::vector<std::string>& values, appeui*, int);
+void validate(boost::any& v, const std::vector<std::string>& values, deveui*, int);
+void validate(boost::any& v, const std::vector<std::string>& values, devkey*, int);
 
 
 #endif
