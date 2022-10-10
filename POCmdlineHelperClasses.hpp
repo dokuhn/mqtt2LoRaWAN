@@ -8,7 +8,7 @@
 class po_cmdline_helper {
 
 public:
-    void init(boost::program_options::options_description cmdline_desc);
+    void init(boost::program_options::options_description *cmdline_desc);
 
 };
 

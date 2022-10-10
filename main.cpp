@@ -4,6 +4,7 @@
 #include <string>
 
 #include "POHelperClasses.hpp"
+#include "POCmdlineHelperClasses.hpp"
 #include "MQTTDataStreamer.hpp"
 
 #include <boost/program_options.hpp>
@@ -186,6 +187,8 @@ int main(int argc, char *argv[])
 
     std::string hostname;
 
+    po_cmdline_helper po_cmdline_inst;
+
     boost::program_options::options_description desc_env;
     desc_env.add_options() ("path", "the execution path")
                            ("home", "the home directory of the executing user")
@@ -217,6 +220,9 @@ int main(int argc, char *argv[])
 
     // set options allowed by the command line
     po::options_description command_line_options("Allowed options");
+
+    po_cmdline_inst.init( &command_line_options );
+    /*
     command_line_options.add_options()  ("help", "produce help message")
                                         ("version,v", "print the version number")
                                         ("hostname,h", po::value<string>()->default_value("localhost"), "Hostname")
@@ -226,6 +232,8 @@ int main(int argc, char *argv[])
                                         ("appeui", po::value<appeui>(), "APPEUI")
                                         ("deveui", po::value<deveui>(), "DEVEUI")
 					                    ("devkey", po::value<devkey>(), "DEVKEY");
+
+    */
 
     // set options allowed in config file
     po::options_description config_file_options;
