@@ -61,4 +61,4 @@ tests/TestSendRecvPacket
 tests/TestSendPacket 
 tests/TestsRecvPacket 
 tests/TestsPty2LoRa
-
+*.log

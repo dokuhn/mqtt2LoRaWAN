@@ -7,10 +7,13 @@
 #include "POCmdlineHelperClasses.hpp"
 #include "POConfigHelperClasses.hpp"
 #include "MQTTDataStreamer.hpp"
+#include "customLogger.hpp"
+
 
 #include <boost/program_options.hpp>
 #include <boost/regex.hpp>
 #include <boost/algorithm/hex.hpp>
+
 namespace po = boost::program_options;
 
 extern "C"
@@ -181,9 +184,20 @@ static void initfunc(osjob_t *j)
     // init done - onEvent() callback will be invoked...
 }
 
+
 // application entry point
 int main(int argc, char *argv[])
 {
+
+    BOOST_LOG_NAMED_SCOPE("named_scope_logging");
+
+    LOG_TRACE << "this is a trace message";
+    LOG_DEBUG << "this is a debug message";
+    LOG_WARNING << "this is a warning message";
+    LOG_ERROR << "this is an error message";
+    LOG_FATAL << "this is a fatal error message";
+
+
     osjob_t initjob;
 
     std::string hostname;
